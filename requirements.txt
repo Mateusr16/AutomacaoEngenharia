@@ -1,0 +1,7 @@
+Flask
+gunicorn
+waitress
+pandas
+openpyxl
+selenium
+webdriver-manager
