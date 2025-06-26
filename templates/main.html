@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automação Processos Engenharia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f5f3f0;
+        }
+        
+        .furniture-bg {
+            background-image: url('http://192.168.0.6/mkt/images/area_trabalho/Fundos%20de%20Tela%20-%20PC%20-%20Lider%202025%20(10).png');
+            background-size: cover;
+            background-position: center;
+            background-blend-mode: overlay;
+            background-color: rgba(60, 47, 38, 0.85);
+        }
+        
+        .btn-desc {
+            background: linear-gradient(135deg, #d4b483 0%, #8C6535 100%);
+        }
+        
+        .btn-ordem {
+            background: linear-gradient(135deg, #d4b483 0%, #8C6535 100%);
+        }
+        
+        .btn-custo {
+            background: linear-gradient(135deg, #d4b483 0%, #8C6535 100%);
+        }
+        
+        .btn-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1);
+        }
+        
+        .logo-text {
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md rounded-2xl overflow-hidden shadow-xl">
+        <!-- Header with furniture background -->
+        <div class="furniture-bg bg-brown-900/90 py-6 px-6 text-center">
+            <div class="flex items-center justify-center mb-4">
+                <i class="fas fa-couch text-white text-3xl mr-3"></i>
+                <span class="logo-text text-white text-2xl">Lider</span>
+            </div>
+            <h1 class="text-white text-xl font-semibold">Ferramenta de Automação</h1>
+            <p class="text-white/90 mt-1">Gerencie seus processos com facilidade</p>
+        </div>
+        
+        <!-- Main content -->
+        <div class="bg-white/95 p-6">
+            <p class="text-gray-600 mb-6 text-center">Selecione o script que deseja executar:</p>
+            
+            <div class="space-y-4">
+                <!-- Alterar Descrição Button -->
+                <form action="/formulario_alterar_descricao" method="get">
+                    <button type="submit" class="btn-desc w-full py-4 px-6 rounded-lg text-gray-80 font-semibold flex items-center justify-center btn-hover transition-all duration-300">
+                        <i class="fas fa-edit mr-3"></i>
+                        <span>Alterar Descrições</span>
+                    </button>
+                </form>
+                
+                <!-- Alterar Ordem Button -->
+                <form action="/executar_alterar_ordem" method="post">
+                    <button type="submit" class="btn-ordem w-full py-4 px-6 rounded-lg text-gray-80 font-semibold flex items-center justify-center btn-hover transition-all duration-300">
+                        <i class="fas fa-sort-amount-up mr-3"></i>
+                        <span>Alterar Ordem</span>
+                    </button>
+                </form>
+                
+                <!-- Atualizar Custo Button -->
+                <form action="/executar_custo" method="post">
+                    <button type="submit" class="btn-custo w-full py-4 px-6 rounded-lg text-gray-80 font-semibold flex items-center justify-center btn-hover transition-all duration-300">
+                        <i class="fas fa-dollar-sign mr-3"></i>
+                        <span>Atualizar Custo</span>
+                    </button>
+                </form>
+            </div>
+            
+            <p class="text-gray-500 text-sm mt-6 text-center flex items-center justify-center">
+                <i class="fas fa-info-circle mr-2"></i>
+                A janela do script será aberta separadamente.
+            </p>
+        </div>
+        
+    </div>
+</body>
+</html>

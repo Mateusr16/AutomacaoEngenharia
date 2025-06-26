@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Descrições</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fef6ee',
+                            100: '#fdead7',
+                            200: '#fbd1ae',
+                            300: '#f9b07b',
+                            400: '#f68348',
+                            500: '#f35e20',
+                            600: '#e44216',
+                            700: '#bd3015',
+                            800: '#962819',
+                            900: '#792418',
+                        },
+                        secondary: {
+                            50: '#f5f3f0',
+                            100: '#e6e2db',
+                            200: '#cdc4b6',
+                            300: '#ad9f8a',
+                            400: '#938067',
+                            500: '#826b54',
+                            600: '#6f5848',
+                            700: '#5a473d',
+                            800: '#4c3d36',
+                            900: '#423632',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .excel-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .excel-table th {
+            background-color: #3c2f26;
+            color: white;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            border: none;
+            position: relative;
+        }
+        
+        .excel-table th:not(:last-child):after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 25%;
+            height: 50%;
+            width: 1px;
+            background-color: rgba(255,255,255,0.2);
+        }
+        
+        .excel-table td {
+            padding: 12px 16px;
+            border: none;
+            background-color: white;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .excel-table tr:not(:last-child) td {
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .excel-table tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+        
+        .excel-table td[contenteditable="true"]:focus {
+            outline: none;
+            background-color: #f0f9ff;
+            box-shadow: inset 0 0 0 2px #3b82f6;
+            border-radius: 0.25rem;
+        }
+        
+        .paste-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.75rem;
+            background-color: #f8fafc;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .paste-area:hover {
+            border-color: #94a3b8;
+            background-color: #f1f5f9;
+        }
+        
+        .paste-area.active {
+            border-color: #3b82f6;
+            background-color: #f0f9ff;
+            transform: scale(0.99);
+        }
+        
+        .remove-row {
+            transition: all 0.2s ease;
+        }
+        
+        .remove-row:hover {
+            transform: scale(1.1);
+        }
+        
+        .checkbox-container input[type="checkbox"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #cbd5e1;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .checkbox-container input[type="checkbox"]:checked {
+            background-color: #3c2f26;
+            border-color: #3c2f26;
+        }
+        
+        .checkbox-container input[type="checkbox"]:checked:after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            color: white;
+            font-size: 10px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .input-field {
+            transition: all 0.2s ease;
+        }
+        
+        .input-field:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        .floating-label {
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: white;
+            padding: 0 5px;
+            font-size: 0.75rem;
+            color: #64748b;
+            z-index: 10;
+        }
+        
+        @media (max-width: 768px) {
+            .flex-container {
+                flex-direction: column;
+            }
+            
+            .excel-table th, 
+            .excel-table td {
+                padding: 8px 12px;
+            }
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        
+        .btn-primary {
+            background-image: linear-gradient(to right, #3c2f26, #5a473d);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary:hover {
+            background-image: linear-gradient(to right, #5a473d, #3c2f26);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-secondary {
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-secondary:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 flex items-center justify-center p-4 md:p-6">
+    <div class="w-full max-w-full rounded-xl overflow-hidden shadow-lg bg-white animate-fade-in">
+        <div class="bg-gradient-to-r from-secondary-700 to-secondary-900 py-6 px-6 text-center">
+            <div class="flex items-center justify-center space-x-3">
+                <i class="fas fa-edit text-white text-2xl"></i>
+                <h1 class="text-white text-2xl font-bold">Editor de Descrições</h1>
+            </div>
+            <p class="text-white/90 mt-2 text-sm">Preencha os campos e edite a tabela abaixo</p>
+        </div>
+        
+        <div class="flex flex-col lg:flex-row p-6 gap-6">
+            <div class="w-full lg:w-2/5">
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-secondary-100 p-2 rounded-lg mr-3">
+                            <i class="fas fa-cog text-secondary-700"></i>
+                        </div>
+                        <h2 class="text-lg font-bold text-gray-800">Login</h2>
+                    </div>
+                    
+                    <div class="space-y-5">
+                        <div class="relative">
+                            <label for="usuario" class="floating-label">Usuário</label>
+                            <div class="relative">
+                                <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" id="usuario" name="usuario" required 
+                                    class="input-field w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:border-primary-500 focus:ring-1 focus:ring-primary-200">
+                            </div>
+                        </div>
+                        
+                        <div class="relative">
+                            <label for="senha" class="floating-label">Senha</label>
+                            <div class="relative">
+                                <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                <input type="password" id="senha" name="senha" required 
+                                    class="input-field w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:border-primary-500 focus:ring-1 focus:ring-primary-200">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Campos para Modificar:</label>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <label class="checkbox-container flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="campos" value="den_item" checked>
+                                    <span class="text-gray-700">Descrição</span>
+                                </label>
+                                <label class="checkbox-container flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="campos" value="espf">
+                                    <span class="text-gray-700">Texto</span>
+                                </label>
+                                <label class="checkbox-container flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="campos" value="den_item_reduz">
+                                    <span class="text-gray-700">Desc Reduzida</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button id="iniciar-processo" class="btn-primary text-white font-semibold py-3 px-6 rounded-lg w-full mt-6 flex items-center justify-center space-x-2">
+                            <i class="fas fa-play-circle"></i>
+                            <span>Iniciar Processo</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-primary-50 border-l-4 border-primary-500 p-4 rounded-lg mt-6">
+                    <div class="flex items-start">
+                        <div class="bg-primary-100 p-2 rounded-lg mr-3">
+                            <i class="fas fa-lightbulb text-primary-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-primary-800 mb-2">Como usar:</h3>
+                            <ul class="text-sm text-primary-800 space-y-2">
+                                <li class="flex items-start">
+                                    <i class="fas fa-copy text-primary-600 mt-1 mr-2 text-xs"></i>
+                                    <span>Copie dados do Excel/planilha</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-mouse-pointer text-primary-600 mt-1 mr-2 text-xs"></i>
+                                    <span>Clique em qualquer célula da tabela</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-paste text-primary-600 mt-1 mr-2 text-xs"></i>
+                                    <span>Cole usando Ctrl+V ou menu de contexto</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-table text-primary-600 mt-1 mr-2 text-xs"></i>
+                                    <span>Os dados serão distribuídos automaticamente</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-plus-circle text-primary-600 mt-1 mr-2 text-xs"></i>
+                                    <span>Adicione/remova linhas conforme necessário</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="w-full lg:w-3/5">
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-100 h-full flex flex-col">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center">
+                            <div class="bg-secondary-100 p-2 rounded-lg mr-3">
+                                <i class="fas fa-table text-secondary-700"></i>
+                            </div>
+                            <h2 class="text-lg font-bold text-gray-800">Tabela de Dados</h2>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="add-row" class="btn-secondary bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-lg text-sm flex items-center space-x-1">
+                                <i class="fas fa-plus"></i>
+                                <span>Linha</span>
+                            </button>
+                            <button id="clear-table" class="btn-secondary bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg text-sm flex items-center space-x-1">
+                                <i class="fas fa-trash-alt"></i>
+                                <span>Limpar</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto flex-grow">
+                        <table id="editable-table" class="excel-table">
+                            <thead>
+                                <tr>
+                                    <th>Empresa</th>
+                                    <th>Código</th>
+                                    <th>Descrição</th>
+                                    <th>Texto</th>
+                                    <th>Dec Reduzida</th>
+                                    <th class="w-16">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                </tbody>
+                        </table>
+                    </div>
+                    
+                    <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+
+                    <div id="paste-area" class="paste-area p-6 mt-6 text-center cursor-pointer flex flex-col items-center justify-center">
+                        <div class="bg-blue-50 p-4 rounded-full mb-3">
+                            <i class="fas fa-paste text-blue-500 text-2xl"></i>
+                        </div>
+                        <p class="font-medium text-gray-700">Clique aqui para carregar um arquivo CSV</p>
+                        <p class="text-sm text-gray-500 mt-1">Cole diretamente na tabela acima ou use o botão para carregar CSV</p>
+                    </div>
+                    
+                    <div class="mt-4 text-sm text-gray-600 flex items-center justify-center bg-gray-50 p-2 rounded-lg">
+                        <i class="fas fa-info-circle text-primary-500 mr-2"></i>
+                        <span>Suporte para colar as planilhas de CSV.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Relatório -->
+    <div id="relatorio-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div class="bg-gradient-to-r from-primary-700 to-primary-900 py-4 px-6 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-white">Relatório de Execução</h3>
+                <button id="fechar-modal" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <h4 class="font-bold text-blue-800 mb-2">Resumo</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span>Campos Modificados:</span>
+                                <span id="res-campos" class="font-semibold"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Total Processado:</span>
+                                <span id="res-total" class="font-semibold"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Alterados com Sucesso:</span>
+                                <span id="res-alterados" class="font-semibold text-green-600"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Falhas:</span>
+                                <span id="res-falhas" class="font-semibold text-red-600"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-red-50 rounded-lg p-4">
+                        <h4 class="font-bold text-red-800 mb-2">Linhas com Erro</h4>
+                        <div id="linhas-erro" class="max-h-40 overflow-y-auto">
+                            <!-- Linhas com erro serão inseridas aqui -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <h4 class="font-bold text-gray-800 mb-3">Ações</h4>
+                    <div class="flex flex-wrap gap-3">
+                        <button id="ver-excel" class="btn-secondary bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                            <i class="fas fa-file-excel mr-2"></i>Ver Excel
+                        </button>
+                        <button id="ver-relatorio" class="btn-secondary bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">
+                            <i class="fas fa-file-alt mr-2"></i>Ver Relatório Completo
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 px-6 py-4 flex justify-end">
+                <button id="fechar-modal-btn" class="btn-primary text-white px-6 py-2 rounded-lg">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.getElementById('editable-table');
+            const tbody = table.querySelector('tbody');
+            const addButton = document.getElementById('add-row');
+            const clearButton = document.getElementById('clear-table');
+            const pasteArea = document.getElementById('paste-area');
+            const iniciarProcesso = document.getElementById('iniciar-processo');
+            const csvFileInput = document.getElementById('csv-file-input');
+            
+            // Adicionar nova linha
+            function addNewRow() {
+                const newRow = document.createElement('tr');
+                newRow.className = 'animate-fade-in';
+                newRow.innerHTML = `
+                    <td contenteditable="true" class="focus:bg-blue-50"></td>
+                    <td contenteditable="true" class="focus:bg-blue-50"></td>
+                    <td contenteditable="true" class="focus:bg-blue-50"></td>
+                    <td contenteditable="true" class="focus:bg-blue-50"></td>
+                    <td contenteditable="true" class="focus:bg-blue-50"></td>
+                    <td class="text-center">
+                        <button class="remove-row text-red-500 hover:text-red-700 transition-colors">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(newRow);
+                
+                // Adicionar evento para o botão de remover
+                newRow.querySelector('.remove-row').addEventListener('click', function() {
+                    newRow.classList.add('opacity-0', 'transition-opacity', 'duration-200');
+                    setTimeout(() => {
+                        tbody.removeChild(newRow);
+                    }, 200);
+                });
+                
+                // Adicionar evento de colagem
+                const cells = newRow.querySelectorAll('td[contenteditable="true"]');
+                cells.forEach(cell => {
+                    cell.addEventListener('paste', handlePaste);
+                    
+                    // Adicionar placeholder quando vazio
+                    cell.addEventListener('focus', function() {
+                        if (!this.textContent.trim()) {
+                            this.dataset.placeholder = 'Digite ou cole dados...';
+                        }
+                    });
+                    
+                    cell.addEventListener('blur', function() {
+                        delete this.dataset.placeholder;
+                    });
+                });
+                
+                return newRow;
+            }
+            
+            // Função para lidar com colagem
+            function handlePaste(e) {
+                e.preventDefault();
+                const clipboardData = e.clipboardData || window.clipboardData;
+                const pastedText = clipboardData.getData('text/plain');
+                
+                // Obter a célula atual
+                const currentCell = e.target;
+                const currentRow = currentCell.parentNode;
+                const cellIndex = Array.from(currentRow.children).indexOf(currentCell);
+                const rowIndex = Array.from(tbody.children).indexOf(currentRow);
+                
+                // Dividir o texto colado em linhas
+                const rowsData = pastedText.split(/\r\n|\n|\r/);
+                
+                // Para cada linha, dividir em colunas (por tabulação)
+                const grid = rowsData.map(row => row.split('\t'));
+                
+                // Iniciar na célula atual e preencher as células subsequentes
+                for (let i = 0; i < grid.length; i++) {
+                    const rowData = grid[i];
+                    
+                    // Se precisarmos de mais linhas, adicionar
+                    let targetRow = tbody.children[rowIndex + i];
+                    if (!targetRow) {
+                        targetRow = addNewRow();
+                    }
+                    
+                    // Preencher as células da linha
+                    const targetCells = targetRow.querySelectorAll('td[contenteditable="true"]');
+                    for (let j = 0; j < rowData.length; j++) {
+                        if (targetCells[cellIndex + j]) {
+                            targetCells[cellIndex + j].textContent = rowData[j];
+                            
+                            // Adicionar animação para células preenchidas
+                            targetCells[cellIndex + j].classList.add('bg-blue-50');
+                            setTimeout(() => {
+                                targetCells[cellIndex + j].classList.remove('bg-blue-50');
+                            }, 500);
+                        }
+                    }
+                }
+            }
+            
+            // Função para lidar com o upload do arquivo CSV
+            function handleCsvUpload(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const csvContent = e.target.result;
+                        const rows = csvContent.split(/\r\n|\n/).filter(row => row.trim() !== ''); // Remove linhas vazias
+                        
+                        // Limpa a tabela atual antes de adicionar os novos dados
+                        while (tbody.firstChild) {
+                            tbody.removeChild(tbody.firstChild);
+                        }
+                        
+                        rows.forEach(rowData => {
+                            const cellsData = rowData.split(';'); // Assumindo que o CSV usa ponto e vírgula como delimitador
+                            if (cellsData.length > 0) {
+                                const newRow = addNewRow();
+                                const targetCells = newRow.querySelectorAll('td[contenteditable="true"]');
+                                for (let j = 0; j < cellsData.length && j < targetCells.length; j++) {
+                                    targetCells[j].textContent = cellsData[j].trim();
+                                }
+                            }
+                        });
+                        
+                        // Exibir mensagem de sucesso
+                        const successMsg = document.createElement('div');
+                        successMsg.className = 'fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-lg shadow-lg z-50 animate-fade-in';
+                        successMsg.innerHTML = `
+                            <div class="flex items-center">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                <span>Arquivo CSV carregado com sucesso!</span>
+                            </div>
+                        `;
+                        document.body.appendChild(successMsg);
+                        
+                        setTimeout(() => {
+                            successMsg.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                            setTimeout(() => successMsg.remove(), 300);
+                        }, 3000);
+                    };
+                    reader.readAsText(file);
+                }
+            }
+
+            // Adicionar primeira linha automaticamente
+            addNewRow();
+            
+            // Evento para o botão Adicionar Linha
+            addButton.addEventListener('click', function() {
+                const newRow = addNewRow();
+                
+                // Focar na primeira célula da nova linha
+                setTimeout(() => {
+                    const firstCell = newRow.querySelector('td[contenteditable="true"]');
+                    if (firstCell) {
+                        firstCell.focus();
+                    }
+                }, 10);
+            });
+            
+            // Evento para limpar a tabela
+            clearButton.addEventListener('click', function() {
+                // Animação para remover todas as linhas
+                const rows = Array.from(tbody.children);
+                rows.forEach(row => {
+                    row.classList.add('opacity-0', 'transition-opacity', 'duration-200');
+                });
+                
+                setTimeout(() => {
+                    while (tbody.firstChild) {
+                        tbody.removeChild(tbody.firstChild);
+                    }
+                    addNewRow(); // Adiciona uma linha vazia após limpar
+                }, 200);
+            });
+            
+            // Evento para a área de colagem (agora também para upload CSV)
+            pasteArea.addEventListener('click', function() {
+                // Ao clicar na área, acione o input de arquivo oculto para abrir o seletor.
+                csvFileInput.click(); 
+
+                // Mantenha a funcionalidade de foco para colar se a tabela estiver vazia
+                if (tbody.children.length === 0) {
+                    addNewRow();
+                }
+                
+                // Selecionar a primeira célula da primeira linha (para o caso de querer colar)
+                const firstRow = tbody.children[0];
+                const firstCell = firstRow.querySelector('td[contenteditable="true"]');
+                
+                if (firstCell) {
+                    firstCell.focus();
+                    
+                    // Destacar a área de colagem temporariamente
+                    pasteArea.classList.add('active');
+                    setTimeout(() => pasteArea.classList.remove('active'), 1000);
+                }
+            });
+
+            // Event listener for the hidden file input
+            csvFileInput.addEventListener('change', handleCsvUpload);
+            
+            // Evento para iniciar o processo
+            iniciarProcesso.addEventListener('click', function() {
+                const usuario = document.getElementById('usuario').value;
+                const senha = document.getElementById('senha').value;
+                const campos = Array.from(document.querySelectorAll('input[name="campos"]:checked'))
+                    .map(cb => cb.value);
+                
+                if (!usuario || !senha || campos.length === 0) {
+                    // ... mostrar erro ...
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-lg z-50 animate-fade-in';
+                    errorMsg.innerHTML = `
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <span>Preencha usuário, senha e selecione pelo menos um campo!</span>
+                        </div>
+                    `;
+                    document.body.appendChild(errorMsg);
+                    
+                    setTimeout(() => {
+                        errorMsg.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                        setTimeout(() => errorMsg.remove(), 300);
+                    }, 3000);
+                    return;
+                }
+                
+                // Coletar dados da tabela
+                const dados = [];
+                const rows = tbody.querySelectorAll('tr');
+                
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td[contenteditable="true"]');
+                    if (cells.length >= 5) {
+                        dados.push({
+                            cod_empresa: cells[0].textContent.trim(),
+                            cod_item: cells[1].textContent.trim(),
+                            den_item: cells[2].textContent.trim(),
+                            espf: cells[3].textContent.trim(),
+                            den_item_reduz: cells[4].textContent.trim()
+                        });
+                    }
+                });
+
+                // Verificar se há dados
+                if (dados.length === 0) {
+                    // Mostrar mensagem de erro
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-lg z-50 animate-fade-in';
+                    errorMsg.innerHTML = `
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <span>A tabela está vazia! Adicione dados antes de iniciar.</span>
+                        </div>
+                    `;
+                    document.body.appendChild(errorMsg);
+                    
+                    setTimeout(() => {
+                        errorMsg.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                        setTimeout(() => errorMsg.remove(), 300);
+                    }, 3000);
+                    return;
+                }
+
+                // Desabilitar o botão e mostrar spinner
+                this.innerHTML = '<i class="fas fa-sync fa-spin mr-2"></i> Processando...';
+                this.disabled = true;
+                
+                // Enviar dados para o backend
+                const formData = new FormData();
+                formData.append('usuario', usuario);
+                formData.append('senha', senha);
+                formData.append('dados_tabela', JSON.stringify(dados));  // Dados da tabela
+                campos.forEach(campo => formData.append('campos', campo));
+
+                fetch('/executar_alterar_descricao', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro na resposta do servidor');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Verificar se há erro no relatório
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    // Mostrar modal com relatório
+                    mostrarRelatorioModal(data);
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-lg z-50 animate-fade-in';
+                    errorMsg.innerHTML = `
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <span>Erro ao iniciar o processo: ${error.message}</span>
+                        </div>
+                    `;
+                    document.body.appendChild(errorMsg);
+                    
+                    setTimeout(() => {
+                        errorMsg.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                        setTimeout(() => errorMsg.remove(), 300);
+                    }, 3000);
+                })
+                .finally(() => {
+                    // Restaurar botão após conclusão
+                    this.innerHTML = '<i class="fas fa-play-circle"></i> Iniciar Processo';
+                    this.disabled = false;
+                });
+            });
+            
+            // Adicionar efeito hover nas linhas da tabela
+            table.addEventListener('mouseover', function(e) {
+                if (e.target.tagName === 'TD' && e.target.contentEditable === 'true') {
+                    e.target.parentNode.classList.add('bg-gray-50');
+                }
+            });
+            
+            table.addEventListener('mouseout', function(e) {
+                if (e.target.tagName === 'TD' && e.target.contentEditable === 'true') {
+                    e.target.parentNode.classList.remove('bg-gray-50');
+                }
+            });
+
+            // Função para mostrar o modal de relatório
+            function mostrarRelatorioModal(data) {
+                // Preencher dados do relatório
+                document.getElementById('res-campos').textContent = data.campos_selecionados.join(', ');
+                document.getElementById('res-total').textContent = data.total_processado;
+                document.getElementById('res-alterados').textContent = data.alterados;
+                document.getElementById('res-falhas').textContent = data.falhas;
+                
+                // Preencher linhas com erro
+                const erroContainer = document.getElementById('linhas-erro');
+                erroContainer.innerHTML = '';
+                
+                if (data.linhas_com_erro && data.linhas_com_erro.length > 0) {
+                    data.linhas_com_erro.forEach(linha => {
+                        const div = document.createElement('div');
+                        div.className = 'py-1 border-b border-red-100';
+                        div.textContent = `Linha ${linha}`;
+                        erroContainer.appendChild(div);
+                    });
+                } else {
+                    const div = document.createElement('div');
+                    div.className = 'text-gray-500 italic';
+                    div.textContent = 'Nenhuma linha com erro';
+                    erroContainer.appendChild(div);
+                }
+                
+                // Configurar botões de ação
+                document.getElementById('ver-excel').onclick = function() {
+                    if (data.relatorio_path) {
+                        const excelPath = data.relatorio_path.replace('_relatorio.json', '.xlsx');
+                        // Abrir o arquivo Excel no navegador não é possível diretamente, então tentamos baixar?
+                        // Vamos criar um link de download temporário
+                        const link = document.createElement('a');
+                        link.href = `file:///${excelPath}`;
+                        link.target = '_blank';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
+                };
+                
+                document.getElementById('ver-relatorio').onclick = function() {
+                    if (data.relatorio_path) {
+                        const link = document.createElement('a');
+                        link.href = `file:///${data.relatorio_path}`;
+                        link.target = '_blank';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
+                };
+                
+                // Mostrar modal
+                document.getElementById('relatorio-modal').classList.remove('hidden');
+            }
+            
+            // Fechar modal
+            function fecharRelatorioModal() {
+                document.getElementById('relatorio-modal').classList.add('hidden');
+            }
+            
+            // Configurar eventos de fechar
+            document.getElementById('fechar-modal').addEventListener('click', fecharRelatorioModal);
+            document.getElementById('fechar-modal-btn').addEventListener('click', fecharRelatorioModal);
+        });
+    </script>
+    <style>
+        /* Adicione este estilo */
+        #relatorio-modal {
+            transition: all 0.3s ease;
+        }
+        
+        #linhas-erro {
+            scrollbar-width: thin;
+            scrollbar-color: #c53030 #fed7d7;
+        }
+        
+        #linhas-erro::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #linhas-erro::-webkit-scrollbar-track {
+            background: #fed7d7;
+            border-radius: 4px;
+        }
+        
+        #linhas-erro::-webkit-scrollbar-thumb {
+            background-color: #c53030;
+            border-radius: 4px;
+        }
+    </style>
+</body>
+</html>
